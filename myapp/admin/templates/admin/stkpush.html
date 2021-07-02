@@ -1,0 +1,63 @@
+{% extends 'admin/base.html' %}
+{% block body %}
+<div class="container content-area">
+        <div class="row justify-content-center">
+          <div class="col-6">
+            <div class="panel">
+              <div class="m-b-15">
+                <h6>Mpesa push</h6>
+                <hr />
+              </div>
+              <div class="form-responsive">
+                   <div id="responseedit"></div>
+                <form enctype="multipart/form-data" id="sform">
+                  <div class="form-group">
+                    <label for="aboutTitle">Mobile no</label>
+                    <input type="phone" class="form-control" name="phone" />
+                    <small id="emailHelp" class="form-text text-muted"
+                      >start number with 254 with no spaces in between</small>
+                  </div>
+                  <div class="form-group">
+                    <label for="aboutDesc">Amount</label>
+                    <input type="number" class="form-control"  name="amount" />
+                  </div>
+
+
+                  <button class="btn btn-primary"  onclick="stkpush(event)">
+                    send push
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    <script>
+     function stkpush(e) {
+        e.preventDefault()
+       var form = $('#sform')[0];
+       var formdata = new FormData(form);
+       $.ajax({
+           type: 'POST',
+           url: '/push',
+           processData: false,
+           contentType: false,
+           dataType: 'json',
+           data: formdata,
+           beforeSend: function () {
+                  $("#responseedit").html(suc("info", "processing....please wait"))
+                },
+           success: function (data) {
+               if (data.suc) {
+                   $("#responseedit").html(suc("success", data.suc))
+               } else {
+                   $("#responseedit").html(suc("danger", data.err))
+               }
+           }
+
+       });
+ }
+    </script>
+{% endblock %}
+

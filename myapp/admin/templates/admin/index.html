@@ -1,0 +1,154 @@
+{% extends 'admin/base.html' %}
+{% block body %}
+<div class="container content-area">
+        <div class="row">
+          <div class="col-12">
+            <div class="panel">
+              <div class="m-b-15">
+                <h6 class="text-center">Mpesa payments</h6>
+                <hr />
+              </div>
+                 <div class="row">
+                    <div class="col-md-6 col-lg-6 mb-2">
+                          <div class="row">
+                              <div class="col-sm-12 col-md-6 col-lg-6">
+                                    <h6 class="balance">Current balance</h6>
+                               </div>
+                          </div>
+                    </div>
+                    <div class=" col-md-6 col-lg-6 mb-2">
+                          <div class="col-sm-12 col-md-6 col-lg-6 float-right">
+                                <input type="search" class="form-control" placeholder="Search" id="srch">
+                          </div>
+                    </div>
+                </div>
+                 <div id="tb" >
+                    <div class="d-flex justify-content-center">
+                      <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                      </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<script id="table-template" type="text/x-handlebars-template">
+{% raw %}
+<div class="table-responsive"  >
+<p>Records found {{ total }}</p>
+  {{#if_cond tabledata '!=' '0'}}
+  <table class="table table-bordered">
+                  <tr>
+                    <th>Name</th>
+                    <th>Transactionid</th>
+                    <th>Phone</th>
+                    <th>Amount</th>
+                    <th>Account</th>
+                    <th>Action</th>
+
+                  </tr>
+
+        {{#each tabledata}}
+                  <tr>
+                    <td>{{toTitleCase name}}</td>
+                    <td>{{transid }}</td>
+                    <td>{{ phone}}</td>
+                    <td>{{ payment}}Ksh</td>
+                    <td>{{ account}}</td>
+                    <td>
+                        <a data-target="#myModal" data-toggle="modal" class="btn btn-success btn-sm mb-2" onclick="updatepayment('{{id}}')" >confirm</a>
+                    </td>
+
+                  </tr>
+        {{/each }}
+
+  </table>
+  {{/if_cond}}
+</div>
+<ul id="pagination-demo" class="pagination-sm"></ul>
+
+{% endraw %}
+</script>
+
+<script>
+  $(document).ready(function () {
+      var pag="";
+      var searchdata="";
+
+      masterloadtable(pag,searchdata)
+
+
+       $('#srch').keyup(function(e){
+        var keycode=e.charCode? e.charCode : e.keyCode;
+        searchdata = $('#srch').val()
+            if(keycode==13 && searchdata.length>1) {
+               masterloadtable(pag,searchdata)
+            }else{
+               masterloadtable(pag,searchdata)
+            }
+        })
+
+
+
+
+  });
+
+  function masterloadtable(pg,srch){
+     $.ajax({
+                type: "POST",
+                url: "/home",
+                data:{pg:pg,srch:srch},
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data)
+                     var datas = {
+                        "total":data.totalrecords,
+                        "page":data.currentpage,
+                        "tabledata": data.data,
+                        "paybillconten":data.paybillbalance
+                        }
+                    $(".balance").html("Current balance: "+data.paybillbalance+"KSH")
+                    templateScript = Handlebars.compile($('#table-template').html());
+                    $("#tb").html(templateScript(datas));
+                    //load my pages'
+                        if(data.totalpages!='null') {
+                            $('#pagination-demo').twbsPagination({
+                                totalPages: data.totalpages,
+                                visiblePages: 3,
+                                startPage: data.currentpage,
+                                initiateStartPageClick: false,
+                                onPageClick: function (event, page) {
+                                    masterloadtable(page,srch)
+                                }
+                            });
+
+                        }
+                        setTimeout(function(){
+                                    masterloadtable(pg,$('#srch').val())
+                                    },5000);
+            }
+     });
+ }
+
+  function updatepayment(pid) {
+       $.ajax({
+           type: 'POST',
+           url: '/comfirm',
+           data:{pid:pid},
+           dataType: 'json',
+           success: function (data) {
+               if (data.suc) {
+                   bootbox.alert(data.suc)
+                   masterloadtable("","")
+               } else {
+                   bootbox.alert(data.err)
+               }
+           }
+
+       });
+ }
+</script>
+{% endblock %}
+
