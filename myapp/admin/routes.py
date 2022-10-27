@@ -6,7 +6,7 @@ import math
 from mpesaa import PaymentService
 import os
 import json
-
+import requests
 import pymysql
 from flask import Blueprint, render_template, make_response, request, jsonify, json, redirect, url_for, session, \
     current_app as app
@@ -16,6 +16,15 @@ from myapp.extension import db
 
 admin = Blueprint('admin', __name__, url_prefix="/", template_folder='templates')
 api.init_app(admin)
+
+def sendingtoAllan(jsndata):
+    url = 'http://testrms.mabnets.com/c2b/c2bconfirm.php?tok=Rms!2021'
+    myjson = jsndata
+
+    x = requests.post(url, json = myjson)
+    print(x.text)
+
+
 
 class Login(Resource):
     def get(self):
@@ -65,7 +74,7 @@ class Indexa(Resource):
             post_parser.add_argument('pg', type=str)
             post_parser.add_argument('srch', type=str)
             args = post_parser.parse_args()
-            statuss="0"
+            statuss=0
 
             # Setting page, limit and offset variables
             per_page = 10
@@ -82,19 +91,22 @@ class Indexa(Resource):
             # Executing a query to get the total number of products
             if search == "":
                 val=(statuss)
-                sqlt = "SELECT COUNT(*) FROM transactions  WHERE status=%s"
-                total = cur.execute(sqlt,val)
+                sqlt = "SELECT COUNT(id) as trs FROM transactions  WHERE status=%s ORDER BY time DESC "
+                cur.execute(sqlt,val)
+                t =cur.fetchone()
+                total =t['trs']
+                print(total)
 
-                sql = "SELECT * FROM transactions WHERE status=%s LIMIT %s,%s"
+                sql = "SELECT * FROM transactions WHERE status=%s ORDER BY time DESC LIMIT %s,%s  "
                 val = (statuss,offset,per_page)
                 results = cur.execute(sql, val)
 
             else:
-                sqlt = "SELECT * FROM transactions WHERE  (name LIKE %s OR phone LIKE %s  OR transid LIKE %s)  AND status=%s"
+                sqlt = "SELECT * FROM transactions WHERE  (name LIKE %s OR phone LIKE %s  OR transid LIKE %s)  AND status=%s ORDER BY time DESC"
                 sval = (('%' + search + '%'),('%' + search + '%'),('%' + search + '%'),statuss)
                 total = cur.execute(sqlt, sval)
 
-                sql = "SELECT * FROM transactions  WHERE (name LIKE %s OR phone LIKE %s  OR transid LIKE %s)  AND status=%s LIMIT %s,%s"
+                sql = "SELECT * FROM transactions  WHERE (name LIKE %s OR phone LIKE %s  OR transid LIKE %s)  AND status=%s ORDER BY time DESC LIMIT %s,%s"
                 val = (('%' + search + '%'),('%' + search + '%'),('%' + search + '%'), statuss,offset, per_page)
                 results = cur.execute(sql, val)
 
@@ -135,6 +147,7 @@ class Comfirm(Resource):
 
     def post(self):
         json_data = request.get_json(force=True)
+        sendingtoAllan(json_data)
 
         shortcode = json_data['BusinessShortCode']
         Transids= json_data['TransID']
@@ -211,10 +224,10 @@ class Push(Resource):
             amount= args['amount']
             phone= args['phone']
 
-            mpesa = PaymentService(consumer_key="4Og7Ziq9wuwzvL85zVo3fnGQAgNJrz4Z",
-                                   consumer_password="Q8y2DZtaGy6N8Xdl",
-                                   passphrase="976a240803d7d1110a1872333770510399125b0c2031814d53a63c484d15f27f",
-                                   shortcode="918885", live=True, debug=True)
+            mpesa = PaymentService(consumer_key="KE9EhCYa65ZAI7iOGvLbTVCqjAOTfuA2",
+                                   consumer_password="meLLKVk7GFIEM93o",
+                                   passphrase="1bc0e7dc75e7574e599f75c9aa27e6007d525fcce99480f50b76ed8557a210bb",
+                                   shortcode="4017553", live=True, debug=True)
             # accesstoken=mpesa.get_access_token()
             timestamp = (
                 str(datetime.datetime.now())
@@ -241,4 +254,3 @@ api.add_resource(Comfirm, '/comfirmation')
 api.add_resource(Valida, '/validation')
 api.add_resource(Comfirmpayment, '/comfirm')
 api.add_resource(Push, '/push')
-

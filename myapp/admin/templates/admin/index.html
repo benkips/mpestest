@@ -121,13 +121,14 @@
                                 initiateStartPageClick: false,
                                 onPageClick: function (event, page) {
                                     masterloadtable(page,srch)
+
                                 }
                             });
-
+                                {#setTimeout(function(){
+                                    masterloadtable(data.currentpage,$('#srch').val())
+                                    },5000);#}
                         }
-                        setTimeout(function(){
-                                    masterloadtable(pg,$('#srch').val())
-                                    },5000);
+
             }
      });
  }
